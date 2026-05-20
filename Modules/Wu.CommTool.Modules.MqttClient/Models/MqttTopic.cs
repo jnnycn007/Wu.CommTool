@@ -11,6 +11,13 @@ public partial class MqttTopic : ObservableObject
         NoLocal = noLocal;
     }
 
+    public MqttTopic(MqttTopic topic)
+    {
+        Topic = topic.Topic;
+        NoLocal = topic.NoLocal;
+        QosLevel = topic.QosLevel;
+    }
+
     /// <summary>
     /// 主题
     /// </summary>
@@ -25,6 +32,11 @@ public partial class MqttTopic : ObservableObject
     /// 消息质量等级
     /// </summary>
     [ObservableProperty] QosLevel qosLevel = QosLevel.Qos1;
+
+    public MqttTopic Clone()
+    {
+        return new MqttTopic(this);
+    }
 
     public override string ToString()
     {
