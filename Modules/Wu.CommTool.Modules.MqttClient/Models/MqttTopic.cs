@@ -5,6 +5,10 @@
 /// </summary>
 public partial class MqttTopic : ObservableObject
 {
+    public MqttTopic()
+    {
+        
+    }
     public MqttTopic(string topic,bool noLocal = false)
     {
         Topic = topic;

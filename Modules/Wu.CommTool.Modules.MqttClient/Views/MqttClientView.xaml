@@ -609,7 +609,8 @@
                                     <Button Margin="4"
                                             Command="{Binding PublishSm4Command}"
                                             Content="SM4加密发布"
-                                            DockPanel.Dock="Right" />
+                                            DockPanel.Dock="Right"
+                                            Visibility="{Binding MqttClientConfig.Sm4CryptoConfig.Key, Converter={wu:StringIsNullOrWhiteSpace2Collapsed}}" />
 
                                     <CheckBox hc:Poptip.Content="是否保留消息"
                                               Content="保留消息"

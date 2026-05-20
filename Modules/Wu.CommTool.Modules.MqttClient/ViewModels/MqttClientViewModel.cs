@@ -138,6 +138,7 @@ public partial class MqttClientViewModel : NavigationViewModel, IDialogHostAware
             //若重复了则不执行操作
             if (MqttClientConfig.SubscribeTopics.FirstOrDefault(x => x.Topic.Equals(NewSubTopic.Topic.Trim())) != null)
                 return;
+            //MqttClientConfig.SubscribeTopics.Add(NewSubTopic);
             MqttClientConfig.SubscribeTopics.Add(NewSubTopic.Clone());
         }
         catch (Exception ex)
@@ -279,7 +280,7 @@ public partial class MqttClientViewModel : NavigationViewModel, IDialogHostAware
                              .WithTopic(MqttClientConfig.PublishTopic)
                              .Build();
 
-            ShowSendMessage($"[SM4][{MqttClientConfig.SendPaylodType.ToString()}]{encryptedMessage}", $"主题：{MqttClientConfig.PublishTopic}");
+            ShowSendMessage($"{encryptedMessage}", $"主题：{MqttClientConfig.PublishTopic}");
             MqttClientPublishResult result = await client.PublishAsync(mam, CancellationToken.None);
             if (result.IsSuccess)
             {
