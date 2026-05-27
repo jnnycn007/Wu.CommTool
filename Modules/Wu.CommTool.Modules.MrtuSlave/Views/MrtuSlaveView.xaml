@@ -218,6 +218,12 @@
                                         Cursor="Hand"
                                         IsEnabled="{Binding MrtuSlaveModel.IsOpened}"
                                         Style="{StaticResource Red_CircleButton}" />
+                                <Button Width="30"
+                                        Height="{Binding RelativeSource={RelativeSource self}, Path=Width}"
+                                        Margin="5"
+                                        Command="{Binding MrtuSlaveModel.MessageClearCommand}"
+                                        Content="{md:PackIcon Kind=Delete}"
+                                        Style="{StaticResource Red_CircleButton}" />
 
                             </StackPanel>
 
@@ -493,6 +499,86 @@
                                                     <TextBox Width="120"
                                                              HorizontalContentAlignment="Center"
                                                              Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="16进制">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Width="120"
+                                                             HorizontalContentAlignment="Center"
+                                                             Text="{Binding HexValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="16位有符号">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Width="120"
+                                                             HorizontalContentAlignment="Center"
+                                                             Text="{Binding Int16Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="16位无符号">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Width="120"
+                                                             HorizontalContentAlignment="Center"
+                                                             Text="{Binding UInt16Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="32位有符号整型">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Width="120"
+                                                             HorizontalContentAlignment="Center"
+                                                             Text="{Binding Int32Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="32位无符号整型">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Width="120"
+                                                             HorizontalContentAlignment="Center"
+                                                             Text="{Binding UInt32Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="浮点值(Float)">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Width="120"
+                                                             HorizontalContentAlignment="Center"
+                                                             Text="{Binding FloatValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F6}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="长整型(Int64)">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Width="120"
+                                                             HorizontalContentAlignment="Center"
+                                                             Text="{Binding LongValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="长浮点型(Double)">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Width="160"
+                                                             HorizontalContentAlignment="Center"
+                                                             Text="{Binding DoubleValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F6}" />
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
