@@ -88,20 +88,21 @@ public partial class MainWindowViewModel : ObservableObject, IConfigureService
     {
         MenuBars =
         [
-            new() { Icon = "LanConnect", Title = "Modbus Rtu", NameSpace = nameof(ModbusRtuView) },
-            new() { Icon = "LanConnect", Title = "ModbusRtu设备监控", NameSpace = nameof(MrtuDeviceMonitorView) },
-            new() { Icon = "LanConnect", Title = "ModbusRtu从站", NameSpace = nameof(MrtuSlaveView) },
+            new() { Icon = "LanConnect", Title = "Modbus RTU", NameSpace = nameof(ModbusRtuView) },
+            new() { Icon = "LanConnect", Title = "ModbusRTU设备监控", NameSpace = nameof(MrtuDeviceMonitorView) },
+            new() { Icon = "LanConnect", Title = "ModbusRTU从站", NameSpace = nameof(MrtuSlaveView) },
 #if DEBUG
 #endif
-            new() { Icon = "LanConnect", Title = "Modbus Tcp", NameSpace = nameof(ModbusTcpView) },
-            new() { Icon = "LanConnect", Title = "ModbusTcp设备监控", NameSpace = nameof(MtcpDeviceMonitorView) },
+            new() { Icon = "LanConnect", Title = "Modbus TCP", NameSpace = nameof(ModbusTcpView) },
+            new() { Icon = "LanConnect", Title = "ModbusTCP设备监控", NameSpace = nameof(MtcpDeviceMonitorView) },
+            new() { Icon = "LanConnect", Title = "ModbusTCP从站", NameSpace = nameof(ModbusTcpSlaveView) },
 #if DEBUG
 #endif
             new() { Icon = "LanConnect", Title = "串口", NameSpace = nameof(UartView) },
-            new() { Icon = "LadyBug", Title = "Mqtt Server", NameSpace = nameof(MqttServerView) },
-            new() { Icon = "Bug", Title = "Mqtt Client", NameSpace = nameof(MqttClientView) },
-            new() { Icon = "ServerNetwork", Title = "Tcp Server", NameSpace = nameof(TcpServerView) },
-            new() { Icon = "NetworkOutline", Title = "Tcp Client", NameSpace = nameof(TcpClientView) },
+            new() { Icon = "LadyBug", Title = "MQTT Server", NameSpace = nameof(MqttServerView) },
+            new() { Icon = "Bug", Title = "MQTT Client", NameSpace = nameof(MqttClientView) },
+            new() { Icon = "ServerNetwork", Title = "TCP Server", NameSpace = nameof(TcpServerView) },
+            new() { Icon = "NetworkOutline", Title = "TCP Client", NameSpace = nameof(TcpClientView) },
             new() { Icon = "LanConnect", Title = "UDP", NameSpace = nameof(UdpView) },
             new() { Icon = "ViewInAr", Title = "Json查看工具", NameSpace = "JsonToolView" },
             new() { Icon = "SwapHorizontal", Title = "转换工具", NameSpace = nameof(ConvertToolsView)},

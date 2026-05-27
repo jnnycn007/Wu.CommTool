@@ -51,7 +51,8 @@ public partial class ModbusTcpViewModel : NavigationViewModel, IDialogHostAware
     ObservableCollection<MenuBar> menuBars =
         [
             new MenuBar() { Icon = "Number1", Title = "自定义帧", NameSpace = nameof(ModbusTcpCustomFrameView) },
-            //new MenuBar() { Icon = "Number1", Title = "主站Master", NameSpace = nameof(ModbusTcpMasterView) },
+            //new MenuBar() { Icon = "ServerNetwork", Title = "从站Slave", NameSpace = nameof(ModbusTcpSlaveView) },
+            //new MenuBar() { Icon = "Number2", Title = "主站Master", NameSpace = nameof(ModbusTcpMasterView) },
             //new MenuBar() { Icon = "Number2", Title = "搜索设备", NameSpace = nameof(SearchDeviceView) },
             //new MenuBar() { Icon = "Number3", Title = "数据监控", NameSpace = nameof(DataMonitorView) },
             //new MenuBar() { Icon = "Number4", Title = "自动应答", NameSpace = nameof(AutoResponseView) },

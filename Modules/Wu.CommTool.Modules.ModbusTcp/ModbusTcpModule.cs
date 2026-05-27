@@ -12,6 +12,7 @@ public class ModbusTcpModule : IModule
         containerRegistry.RegisterForNavigation<ModbusTcpView, ModbusTcpViewModel>();   //ModbusTcp主界面 
         containerRegistry.RegisterForNavigation<ModbusTcpCustomFrameView, ModbusTcpCustomFrameViewModel>();//ModbusTcp自定义帧主界面 
         containerRegistry.RegisterForNavigation<ModbusTcpMasterView, ModbusTcpMasterViewModel>();//ModbusTcp自定义帧主界面 
+        containerRegistry.RegisterForNavigation<ModbusTcpSlaveView, ModbusTcpSlaveViewModel>();//ModbusTcp从站界面 
         containerRegistry.RegisterForNavigation<AnalyzeMtcpFrameView, AnalyzeMtcpFrameViewModel>();//ModbusTcp 解析帧弹窗
         containerRegistry.RegisterForNavigation<MtcpDeviceMonitorView>();
         containerRegistry.RegisterForNavigation<MtcpDeviceEditView,MtcpDeviceEditViewModel>();
