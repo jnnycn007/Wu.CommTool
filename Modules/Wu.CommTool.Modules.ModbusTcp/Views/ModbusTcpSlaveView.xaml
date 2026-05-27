@@ -174,6 +174,16 @@
                                                     IsReadOnly="True" />
                                 <DataGridTextColumn Binding="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Header="名称" />
                                 <DataGridTextColumn Binding="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Header="值" />
+                                <DataGridTextColumn Binding="{Binding Int16Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Header="16位有符号" />
+                                <DataGridTextColumn Binding="{Binding UInt16Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Header="16位无符号" />
+                                <DataGridTextColumn Binding="{Binding HexValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Header="16进制" />
+                                <DataGridTextColumn Binding="{Binding FloatValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F6}" Header="浮点值(Float)" />
+                                <DataGridTextColumn Binding="{Binding Int32Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Header="32位有符号整型" />
+                                <DataGridTextColumn Binding="{Binding UInt32Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Header="32位无符号整型" />
+                                <DataGridTextColumn Binding="{Binding LongValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Header="长整型(Int64)" />
+                                <DataGridTextColumn MaxWidth="500"
+                                                    Binding="{Binding DoubleValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F6}"
+                                                    Header="长浮点型(Double)" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </TabItem>

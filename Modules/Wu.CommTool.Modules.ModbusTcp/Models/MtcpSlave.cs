@@ -143,7 +143,33 @@ public partial class MtcpSlave : ObservableObject, IDisposable
         InputRegisters.Clear();
         for (int i = 0; i < HoldingAddressCount; i++)
         {
-            InputRegisters.Add(new MtcpRegisterItem((ushort)(HoldingStartAddress + i)));
+            InputRegisters.Add(new MtcpRegisterItem((ushort)(HoldingStartAddress + i), ReadInputRegisterByAddress, WriteInputRegisterByAddress));
+        }
+    }
+
+    private ushort ReadInputRegisterByAddress(ushort address)
+    {
+        if (TryGetInputIndex(address, out var index))
+        {
+            return InputRegisters[index].Value;
+        }
+        return 0;
+    }
+
+    private void WriteInputRegisterByAddress(ushort address, ushort value)
+    {
+        if (!TryGetInputIndex(address, out var index))
+        {
+            return;
+        }
+
+        InputRegisters[index].Value = value;
+        for (int i = 0; i <= 3; i++)
+        {
+            if (address >= HoldingStartAddress + i && TryGetInputIndex((ushort)(address - i), out var notifyIndex))
+            {
+                InputRegisters[notifyIndex].NotifyExtendedValueChanged();
+            }
         }
     }
 
@@ -540,7 +566,7 @@ public partial class MtcpSlave : ObservableObject, IDisposable
         {
             for (int i = 0; i < quantity; i++)
             {
-                ushort value = InputRegisters[startIndex + i].Value;
+                ushort value = ReadInputRegisterByAddress((ushort)(start + i));
                 responsePdu[2 + i * 2] = (byte)(value >> 8);
                 responsePdu[3 + i * 2] = (byte)(value & 0xFF);
             }
