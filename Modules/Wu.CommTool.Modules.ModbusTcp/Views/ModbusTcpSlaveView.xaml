@@ -59,6 +59,42 @@
                                 IsEnabled="{Binding MtcpSlave.IsRunning, Converter={wu:ReverseBool}}"
                                 Style="{StaticResource BlueButton}" />
 
+                        <TextBlock Margin="8,8,8,0"
+                                   FontWeight="Bold"
+                                   Text="配置文件" />
+
+                        <!--<ComboBox Margin="8,4,8,0"
+                                  DisplayMemberPath="Name"
+                                  ItemsSource="{Binding MtcpSlave.ConfigFiles}"
+                                  SelectedItem="{Binding MtcpSlave.SelectedConfigFile, Mode=TwoWay}"
+                                  Style="{StaticResource FormComboBox}" />
+
+                        <StackPanel Margin="8,4,8,0" Orientation="Horizontal">
+                            <Button Margin="0,0,4,0"
+                                    Command="{Binding MtcpSlave.QuickImportConfigCommand}"
+                                    Content="快速导入"
+                                    Style="{StaticResource BlueButton}" />
+                            <Button Margin="4,0,0,0"
+                                    Command="{Binding MtcpSlave.RefreshQuickImportListCommand}"
+                                    Content="刷新"
+                                    Style="{StaticResource BlueButton}" />
+                        </StackPanel>-->
+
+                        <StackPanel Margin="8,4,8,0" Orientation="Horizontal">
+                            <Button Margin="0,0,4,0"
+                                    Command="{Binding MtcpSlave.ImportConfigCommand}"
+                                    Content="导入配置"
+                                    Style="{StaticResource BlueButton}" />
+                            <Button Margin="4,0,4,0"
+                                    Command="{Binding MtcpSlave.ExportConfigCommand}"
+                                    Content="导出配置"
+                                    Style="{StaticResource BlueButton}" />
+                            <Button Margin="4,0,0,0"
+                                    Command="{Binding MtcpSlave.SaveConfigCommand}"
+                                    Content="保存配置"
+                                    Style="{StaticResource GreenButton}" />
+                        </StackPanel>
+
                         <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                             <Button Margin="20"
                                     Command="{Binding MtcpSlave.RunCommand}"
@@ -107,6 +143,27 @@
                                 Content="{md:PackIcon Kind=Stop}"
                                 IsEnabled="{Binding MtcpSlave.IsRunning}"
                                 Style="{StaticResource Red_CircleButton}" />
+
+                        <!--<Button Width="30"
+                                Height="{Binding RelativeSource={RelativeSource self}, Path=Width}"
+                                Margin="5"
+                                Command="{Binding MtcpSlave.ImportConfigCommand}"
+                                Content="{md:PackIcon Kind=FolderOpenOutline}"
+                                Style="{StaticResource Blue_CircleButton}" />
+
+                        <Button Width="30"
+                                Height="{Binding RelativeSource={RelativeSource self}, Path=Width}"
+                                Margin="5"
+                                Command="{Binding MtcpSlave.ExportConfigCommand}"
+                                Content="{md:PackIcon Kind=ContentSaveOutline}"
+                                Style="{StaticResource Blue_CircleButton}" />
+
+                        <Button Width="30"
+                                Height="{Binding RelativeSource={RelativeSource self}, Path=Width}"
+                                Margin="5"
+                                Command="{Binding MtcpSlave.SaveConfigCommand}"
+                                Content="{md:PackIcon Kind=ContentSaveOutline}"
+                                Style="{StaticResource Green_CircleButton}" />-->
 
                         <Button Width="30"
                                 Height="{Binding RelativeSource={RelativeSource self}, Path=Width}"

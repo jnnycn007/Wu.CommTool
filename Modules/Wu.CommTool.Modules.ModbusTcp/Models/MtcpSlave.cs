@@ -18,6 +18,11 @@ public partial class MtcpSlave : ObservableObject, IDisposable
         StopCommand = new RelayCommand(Stop);
         MessageClearCommand = new RelayCommand(MessageClear);
         ApplyHoldingRangeCommand = new RelayCommand(ApplyHoldingRange);
+        ImportConfigCommand = new RelayCommand(ImportConfig);
+        ExportConfigCommand = new RelayCommand(ExportConfig);
+        SaveConfigCommand = new RelayCommand(SaveConfig);
+        RefreshQuickImportListCommand = new RelayCommand(RefreshQuickImportList);
+        QuickImportConfigCommand = new RelayCommand(QuickImportConfig);
 
         BuildHoldingRegisters();
         BuildInputRegisters();
@@ -26,6 +31,9 @@ public partial class MtcpSlave : ObservableObject, IDisposable
         {
             Coils.Add(new MtcpCoilItem(i));
         }
+
+        GetDefaultConfig();
+        RefreshQuickImportList();
     }
 
     private string serverIp = "127.0.0.1";
@@ -102,6 +110,43 @@ public partial class MtcpSlave : ObservableObject, IDisposable
     public IRelayCommand StopCommand { get; }
     public IRelayCommand MessageClearCommand { get; }
     public IRelayCommand ApplyHoldingRangeCommand { get; }
+    public IRelayCommand ImportConfigCommand { get; }
+    public IRelayCommand ExportConfigCommand { get; }
+    public IRelayCommand SaveConfigCommand { get; }
+    public IRelayCommand RefreshQuickImportListCommand { get; }
+    public IRelayCommand QuickImportConfigCommand { get; }
+
+    private readonly string configDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Configs\ModbusTcpSlaveConfig");
+    private readonly string configExtension = "jsonMTS";
+
+    private string currentConfigFullName = string.Empty;
+    public string CurrentConfigFullName
+    {
+        get => currentConfigFullName;
+        set
+        {
+            if (SetProperty(ref currentConfigFullName, value))
+            {
+                OnPropertyChanged(nameof(CurrentConfigName));
+            }
+        }
+    }
+
+    public string CurrentConfigName => Path.GetFileNameWithoutExtension(CurrentConfigFullName);
+
+    private ObservableCollection<ConfigFile> configFiles = [];
+    public ObservableCollection<ConfigFile> ConfigFiles
+    {
+        get => configFiles;
+        set => SetProperty(ref configFiles, value);
+    }
+
+    private ConfigFile selectedConfigFile;
+    public ConfigFile SelectedConfigFile
+    {
+        get => selectedConfigFile;
+        set => SetProperty(ref selectedConfigFile, value);
+    }
 
     private void BuildHoldingRegisters()
     {
@@ -196,6 +241,252 @@ public partial class MtcpSlave : ObservableObject, IDisposable
         BuildHoldingRegisters();
         BuildInputRegisters();
         ShowMessage($"寄存器范围已更新: {HoldingStartAddress} ~ {HoldingStartAddress + HoldingAddressCount - 1}");
+    }
+
+    private MtcpSlaveConfig CreateConfigSnapshot()
+    {
+        return new MtcpSlaveConfig
+        {
+            ServerIp = ServerIp,
+            ServerPort = ServerPort,
+            SlaveId = SlaveId,
+            HoldingStartAddress = HoldingStartAddress,
+            HoldingAddressCount = HoldingAddressCount,
+            HoldingRegisters = HoldingRegisters.Select(x => new MtcpRegisterConfigItem
+            {
+                Address = x.Address,
+                Value = x.Value,
+                Description = x.Description
+            }).ToList(),
+            InputRegisters = InputRegisters.Select(x => new MtcpRegisterConfigItem
+            {
+                Address = x.Address,
+                Value = x.Value,
+                Description = x.Description
+            }).ToList(),
+            Coils = Coils.Select(x => new MtcpCoilConfigItem
+            {
+                Address = x.Address,
+                Value = x.Value,
+                Description = x.Description
+            }).ToList()
+        };
+    }
+
+    private void ApplyConfig(MtcpSlaveConfig config)
+    {
+        if (config == null)
+        {
+            return;
+        }
+
+        ServerIp = config.ServerIp;
+        ServerPort = config.ServerPort;
+        SlaveId = config.SlaveId;
+        HoldingStartAddress = config.HoldingStartAddress;
+        HoldingAddressCount = config.HoldingAddressCount == 0 ? (ushort)300 : config.HoldingAddressCount;
+
+        BuildHoldingRegisters();
+        BuildInputRegisters();
+
+        var holdingMap = config.HoldingRegisters?.ToDictionary(x => x.Address) ?? [];
+        foreach (var item in HoldingRegisters)
+        {
+            if (holdingMap.TryGetValue(item.Address, out var source))
+            {
+                item.Value = source.Value;
+                item.Description = source.Description ?? string.Empty;
+            }
+        }
+
+        var inputMap = config.InputRegisters?.ToDictionary(x => x.Address) ?? [];
+        foreach (var item in InputRegisters)
+        {
+            if (inputMap.TryGetValue(item.Address, out var source))
+            {
+                item.Value = source.Value;
+                item.Description = source.Description ?? string.Empty;
+            }
+        }
+
+        if (config.Coils != null)
+        {
+            Coils.Clear();
+            foreach (var coil in config.Coils)
+            {
+                Coils.Add(new MtcpCoilItem(coil.Address)
+                {
+                    Value = coil.Value,
+                    Description = coil.Description ?? string.Empty
+                });
+            }
+        }
+    }
+
+    private void GetDefaultConfig()
+    {
+        try
+        {
+            Wu.Utils.IoUtil.Exists(configDirectory);
+            var filePath = Path.Combine(configDirectory, $"Default.{configExtension}");
+            CurrentConfigFullName = filePath;
+            if (File.Exists(filePath))
+            {
+                var json = Core.Common.Utils.ReadJsonFile(filePath);
+                var config = JsonConvert.DeserializeObject<MtcpSlaveConfig>(json);
+                if (config != null)
+                {
+                    ApplyConfig(config);
+                    ShowMessage("读取默认配置成功");
+                }
+            }
+            else
+            {
+                SaveConfigToFile(filePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"读取默认配置失败: {ex.Message}");
+        }
+    }
+
+    private void SaveConfigToFile(string fileName)
+    {
+        var content = JsonConvert.SerializeObject(CreateConfigSnapshot());
+        Core.Common.Utils.WriteJsonFile(fileName, content);
+    }
+
+    private void SaveConfig()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(CurrentConfigFullName))
+            {
+                CurrentConfigFullName = Path.Combine(configDirectory, $"Default.{configExtension}");
+            }
+
+            SaveConfigToFile(CurrentConfigFullName);
+            HcGrowlExtensions.Success($"保存配置: {CurrentConfigName}");
+            RefreshQuickImportList();
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"保存配置失败: {ex.Message}");
+        }
+    }
+
+    private void ExportConfig()
+    {
+        try
+        {
+            Wu.Utils.IoUtil.Exists(configDirectory);
+            var sfd = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "请选择导出配置文件...",
+                Filter = $"json files(*.{configExtension})|*.{configExtension}",
+                FilterIndex = 1,
+                FileName = "Default",
+                DefaultExt = configExtension,
+                InitialDirectory = configDirectory,
+                OverwritePrompt = true,
+                AddExtension = true,
+            };
+
+            if (sfd.ShowDialog() != true)
+                return;
+
+            CurrentConfigFullName = sfd.FileName;
+            SaveConfigToFile(sfd.FileName);
+            HcGrowlExtensions.Success($"导出配置: {CurrentConfigName}");
+            RefreshQuickImportList();
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"导出配置失败: {ex.Message}");
+        }
+    }
+
+    private void ImportConfig()
+    {
+        try
+        {
+            Wu.Utils.IoUtil.Exists(configDirectory);
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "请选择导入配置文件...",
+                Filter = $"json files(*.{configExtension})|*.{configExtension}",
+                FilterIndex = 1,
+                InitialDirectory = configDirectory
+            };
+
+            if (dlg.ShowDialog() != true)
+                return;
+
+            CurrentConfigFullName = dlg.FileName;
+            var json = Core.Common.Utils.ReadJsonFile(dlg.FileName);
+            var config = JsonConvert.DeserializeObject<MtcpSlaveConfig>(json);
+            if (config == null)
+            {
+                ShowErrorMessage("读取配置文件失败");
+                return;
+            }
+
+            ApplyConfig(config);
+            HcGrowlExtensions.Success($"导入配置: {CurrentConfigName}");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"导入配置失败: {ex.Message}");
+        }
+    }
+
+    private void QuickImportConfig()
+    {
+        try
+        {
+            if (SelectedConfigFile == null)
+            {
+                return;
+            }
+
+            CurrentConfigFullName = SelectedConfigFile.FullName;
+            var json = Core.Common.Utils.ReadJsonFile(SelectedConfigFile.FullName);
+            var config = JsonConvert.DeserializeObject<MtcpSlaveConfig>(json);
+            if (config == null)
+            {
+                ShowErrorMessage("读取配置文件失败");
+                return;
+            }
+
+            ApplyConfig(config);
+            HcGrowlExtensions.Success($"导入配置: {CurrentConfigName}");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"导入配置失败: {ex.Message}");
+        }
+    }
+
+    private void RefreshQuickImportList()
+    {
+        try
+        {
+            Wu.Utils.IoUtil.Exists(configDirectory);
+            DirectoryInfo folder = new(configDirectory);
+            var files = folder.GetFiles().Where(x => x.Extension.Equals($".{configExtension}", StringComparison.OrdinalIgnoreCase))
+                .Select(item => new ConfigFile(item));
+
+            ConfigFiles.Clear();
+            foreach (var item in files)
+            {
+                ConfigFiles.Add(item);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"读取配置目录失败: {ex.Message}");
+        }
     }
 
     private bool TryGetHoldingIndex(ushort address, out int index)
@@ -813,6 +1104,32 @@ public partial class MtcpSlave : ObservableObject, IDisposable
     {
         Stop();
     }
+}
+
+public class MtcpSlaveConfig
+{
+    public string ServerIp { get; set; } = "127.0.0.1";
+    public int ServerPort { get; set; } = 502;
+    public byte SlaveId { get; set; } = 1;
+    public ushort HoldingStartAddress { get; set; } = 0;
+    public ushort HoldingAddressCount { get; set; } = 300;
+    public List<MtcpRegisterConfigItem> HoldingRegisters { get; set; } = [];
+    public List<MtcpRegisterConfigItem> InputRegisters { get; set; } = [];
+    public List<MtcpCoilConfigItem> Coils { get; set; } = [];
+}
+
+public class MtcpRegisterConfigItem
+{
+    public ushort Address { get; set; }
+    public ushort Value { get; set; }
+    public string Description { get; set; } = string.Empty;
+}
+
+public class MtcpCoilConfigItem
+{
+    public ushort Address { get; set; }
+    public bool Value { get; set; }
+    public string Description { get; set; } = string.Empty;
 }
 
 public partial class MtcpRegisterItem : ObservableObject
