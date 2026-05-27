@@ -28,7 +28,7 @@ public partial class MtcpSlave : ObservableObject, IDisposable
         }
     }
 
-    private string serverIp = "0.0.0.0";
+    private string serverIp = "127.0.0.1";
     public string ServerIp
     {
         get => serverIp;
@@ -108,7 +108,33 @@ public partial class MtcpSlave : ObservableObject, IDisposable
         HoldingRegisters.Clear();
         for (int i = 0; i < HoldingAddressCount; i++)
         {
-            HoldingRegisters.Add(new MtcpRegisterItem((ushort)(HoldingStartAddress + i)));
+            HoldingRegisters.Add(new MtcpRegisterItem((ushort)(HoldingStartAddress + i), ReadHoldingRegisterByAddress, WriteHoldingRegisterByAddress));
+        }
+    }
+
+    private ushort ReadHoldingRegisterByAddress(ushort address)
+    {
+        if (TryGetHoldingIndex(address, out var index))
+        {
+            return HoldingRegisters[index].Value;
+        }
+        return 0;
+    }
+
+    private void WriteHoldingRegisterByAddress(ushort address, ushort value)
+    {
+        if (!TryGetHoldingIndex(address, out var index))
+        {
+            return;
+        }
+
+        HoldingRegisters[index].Value = value;
+        for (int i = 0; i <= 3; i++)
+        {
+            if (address >= HoldingStartAddress + i && TryGetHoldingIndex((ushort)(address - i), out var notifyIndex))
+            {
+                HoldingRegisters[notifyIndex].NotifyExtendedValueChanged();
+            }
         }
     }
 
@@ -471,7 +497,7 @@ public partial class MtcpSlave : ObservableObject, IDisposable
         {
             for (int i = 0; i < quantity; i++)
             {
-                ushort value = HoldingRegisters[startIndex + i].Value;
+                ushort value = ReadHoldingRegisterByAddress((ushort)(start + i));
                 responsePdu[2 + i * 2] = (byte)(value >> 8);
                 responsePdu[3 + i * 2] = (byte)(value & 0xFF);
             }
@@ -568,7 +594,7 @@ public partial class MtcpSlave : ObservableObject, IDisposable
 
         lock (syncRoot)
         {
-            HoldingRegisters[index].Value = value;
+            WriteHoldingRegisterByAddress(address, value);
         }
 
         return BuildResponse(transactionId, protocolId, unitId, pdu.Take(5).ToArray());
@@ -658,7 +684,7 @@ public partial class MtcpSlave : ObservableObject, IDisposable
             for (int i = 0; i < quantity; i++)
             {
                 ushort value = (ushort)((pdu[6 + i * 2] << 8) | pdu[7 + i * 2]);
-                HoldingRegisters[startIndex + i].Value = value;
+                WriteHoldingRegisterByAddress((ushort)(start + i), value);
             }
         }
 
@@ -765,9 +791,18 @@ public partial class MtcpSlave : ObservableObject, IDisposable
 
 public partial class MtcpRegisterItem : ObservableObject
 {
+    private readonly Func<ushort, ushort> readRegisterCallback;
+    private readonly Action<ushort, ushort> writeRegisterCallback;
+
     public MtcpRegisterItem(ushort address)
     {
         Address = address;
+    }
+
+    public MtcpRegisterItem(ushort address, Func<ushort, ushort> readRegisterCallback, Action<ushort, ushort> writeRegisterCallback) : this(address)
+    {
+        this.readRegisterCallback = readRegisterCallback;
+        this.writeRegisterCallback = writeRegisterCallback;
     }
 
     private ushort address;
@@ -784,11 +819,341 @@ public partial class MtcpRegisterItem : ObservableObject
         set => SetProperty(ref this.value, value);
     }
 
+    public short Int16Value
+    {
+        get => unchecked((short)Value);
+        set
+        {
+            WriteWords([unchecked((ushort)value)]);
+            OnPropertyChanged(nameof(Int16Value));
+        }
+    }
+
+    public ushort UInt16Value
+    {
+        get => Value;
+        set
+        {
+            WriteWords([value]);
+            OnPropertyChanged(nameof(UInt16Value));
+        }
+    }
+
+    public string HexValue
+    {
+        get => $"0x{Value:X4}";
+        set
+        {
+            var text = (value ?? string.Empty).Trim();
+            if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                text = text[2..];
+            }
+
+            if (ushort.TryParse(text, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var hex))
+            {
+                WriteWords([hex]);
+                OnPropertyChanged(nameof(HexValue));
+            }
+        }
+    }
+
+    public float FloatValue
+    {
+        get
+        {
+            if (readRegisterCallback == null)
+            {
+                return Value;
+            }
+
+            ushort highWord = readRegisterCallback(Address);
+            ushort lowWord = Address < ushort.MaxValue ? readRegisterCallback((ushort)(Address + 1)) : (ushort)0;
+
+            byte[] bytes =
+            [
+                (byte)(highWord >> 8),
+                (byte)(highWord & 0xFF),
+                (byte)(lowWord >> 8),
+                (byte)(lowWord & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToSingle(bytes, 0);
+        }
+        set
+        {
+            if (writeRegisterCallback == null)
+            {
+                Value = (ushort)value;
+                return;
+            }
+
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            ushort highWord = (ushort)((bytes[0] << 8) | bytes[1]);
+            ushort lowWord = (ushort)((bytes[2] << 8) | bytes[3]);
+
+            writeRegisterCallback(Address, highWord);
+            if (Address < ushort.MaxValue)
+            {
+                writeRegisterCallback((ushort)(Address + 1), lowWord);
+            }
+
+            OnPropertyChanged(nameof(FloatValue));
+        }
+    }
+
+    public int IntValue
+    {
+        get
+        {
+            if (!TryReadWords(2, out var words))
+            {
+                return Value;
+            }
+
+            byte[] bytes =
+            [
+                (byte)(words[0] >> 8),
+                (byte)(words[0] & 0xFF),
+                (byte)(words[1] >> 8),
+                (byte)(words[1] & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToInt32(bytes, 0);
+        }
+        set
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            WriteWords(
+            [
+                (ushort)((bytes[0] << 8) | bytes[1]),
+                (ushort)((bytes[2] << 8) | bytes[3])
+            ]);
+
+            OnPropertyChanged(nameof(IntValue));
+        }
+    }
+
+    public int Int32Value
+    {
+        get => IntValue;
+        set
+        {
+            IntValue = value;
+            OnPropertyChanged(nameof(Int32Value));
+        }
+    }
+
+    public uint UInt32Value
+    {
+        get
+        {
+            if (!TryReadWords(2, out var words))
+            {
+                return Value;
+            }
+
+            byte[] bytes =
+            [
+                (byte)(words[0] >> 8),
+                (byte)(words[0] & 0xFF),
+                (byte)(words[1] >> 8),
+                (byte)(words[1] & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToUInt32(bytes, 0);
+        }
+        set
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            WriteWords(
+            [
+                (ushort)((bytes[0] << 8) | bytes[1]),
+                (ushort)((bytes[2] << 8) | bytes[3])
+            ]);
+
+            OnPropertyChanged(nameof(UInt32Value));
+        }
+    }
+
+    public long LongValue
+    {
+        get
+        {
+            if (!TryReadWords(4, out var words))
+            {
+                return Value;
+            }
+
+            byte[] bytes =
+            [
+                (byte)(words[0] >> 8), (byte)(words[0] & 0xFF),
+                (byte)(words[1] >> 8), (byte)(words[1] & 0xFF),
+                (byte)(words[2] >> 8), (byte)(words[2] & 0xFF),
+                (byte)(words[3] >> 8), (byte)(words[3] & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToInt64(bytes, 0);
+        }
+        set
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            WriteWords(
+            [
+                (ushort)((bytes[0] << 8) | bytes[1]),
+                (ushort)((bytes[2] << 8) | bytes[3]),
+                (ushort)((bytes[4] << 8) | bytes[5]),
+                (ushort)((bytes[6] << 8) | bytes[7])
+            ]);
+
+            OnPropertyChanged(nameof(LongValue));
+        }
+    }
+
+    public double DoubleValue
+    {
+        get
+        {
+            if (!TryReadWords(4, out var words))
+            {
+                return Value;
+            }
+
+            byte[] bytes =
+            [
+                (byte)(words[0] >> 8), (byte)(words[0] & 0xFF),
+                (byte)(words[1] >> 8), (byte)(words[1] & 0xFF),
+                (byte)(words[2] >> 8), (byte)(words[2] & 0xFF),
+                (byte)(words[3] >> 8), (byte)(words[3] & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToDouble(bytes, 0);
+        }
+        set
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            WriteWords(
+            [
+                (ushort)((bytes[0] << 8) | bytes[1]),
+                (ushort)((bytes[2] << 8) | bytes[3]),
+                (ushort)((bytes[4] << 8) | bytes[5]),
+                (ushort)((bytes[6] << 8) | bytes[7])
+            ]);
+
+            OnPropertyChanged(nameof(DoubleValue));
+        }
+    }
+
     private string description = string.Empty;
     public string Description
     {
         get => description;
         set => SetProperty(ref description, value);
+    }
+
+    private bool TryReadWords(int wordCount, out ushort[] words)
+    {
+        words = new ushort[wordCount];
+        if (readRegisterCallback == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < wordCount; i++)
+        {
+            if (Address + i > ushort.MaxValue)
+            {
+                return false;
+            }
+
+            words[i] = readRegisterCallback((ushort)(Address + i));
+        }
+
+        return true;
+    }
+
+    private void WriteWords(ushort[] words)
+    {
+        if (writeRegisterCallback == null)
+        {
+            if (words.Length > 0)
+            {
+                Value = words[0];
+            }
+            return;
+        }
+
+        for (int i = 0; i < words.Length; i++)
+        {
+            if (Address + i > ushort.MaxValue)
+            {
+                return;
+            }
+            writeRegisterCallback((ushort)(Address + i), words[i]);
+        }
+    }
+
+    public void NotifyExtendedValueChanged()
+    {
+        OnPropertyChanged(nameof(Int16Value));
+        OnPropertyChanged(nameof(UInt16Value));
+        OnPropertyChanged(nameof(HexValue));
+        OnPropertyChanged(nameof(FloatValue));
+        OnPropertyChanged(nameof(IntValue));
+        OnPropertyChanged(nameof(Int32Value));
+        OnPropertyChanged(nameof(UInt32Value));
+        OnPropertyChanged(nameof(LongValue));
+        OnPropertyChanged(nameof(DoubleValue));
     }
 }
 
