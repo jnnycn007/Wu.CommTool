@@ -67,6 +67,259 @@ public partial class ModbusRegister : ObservableObject
     /// </summary>
     [ObservableProperty] private ushort value;
 
+    public short Int16Value
+    {
+        get => unchecked((short)Value);
+        set
+        {
+            WriteWords([unchecked((ushort)value)]);
+            OnPropertyChanged(nameof(Int16Value));
+        }
+    }
+
+    public ushort UInt16Value
+    {
+        get => Value;
+        set
+        {
+            WriteWords([value]);
+            OnPropertyChanged(nameof(UInt16Value));
+        }
+    }
+
+    public string HexValue
+    {
+        get => $"0x{Value:X4}";
+        set
+        {
+            var text = (value ?? string.Empty).Trim();
+            if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                text = text[2..];
+            }
+
+            if (ushort.TryParse(text, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var hex))
+            {
+                WriteWords([hex]);
+                OnPropertyChanged(nameof(HexValue));
+            }
+        }
+    }
+
+    public int Int32Value
+    {
+        get
+        {
+            if (!TryReadWords(2, out var words))
+            {
+                return Value;
+            }
+
+            byte[] bytes =
+            [
+                (byte)(words[0] >> 8),
+                (byte)(words[0] & 0xFF),
+                (byte)(words[1] >> 8),
+                (byte)(words[1] & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToInt32(bytes, 0);
+        }
+        set
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            WriteWords(
+            [
+                (ushort)((bytes[0] << 8) | bytes[1]),
+                (ushort)((bytes[2] << 8) | bytes[3])
+            ]);
+
+            OnPropertyChanged(nameof(Int32Value));
+        }
+    }
+
+    public uint UInt32Value
+    {
+        get
+        {
+            if (!TryReadWords(2, out var words))
+            {
+                return Value;
+            }
+
+            byte[] bytes =
+            [
+                (byte)(words[0] >> 8),
+                (byte)(words[0] & 0xFF),
+                (byte)(words[1] >> 8),
+                (byte)(words[1] & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToUInt32(bytes, 0);
+        }
+        set
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            WriteWords(
+            [
+                (ushort)((bytes[0] << 8) | bytes[1]),
+                (ushort)((bytes[2] << 8) | bytes[3])
+            ]);
+
+            OnPropertyChanged(nameof(UInt32Value));
+        }
+    }
+
+    public float FloatValue
+    {
+        get
+        {
+            if (!TryReadWords(2, out var words))
+            {
+                return Value;
+            }
+
+            byte[] bytes =
+            [
+                (byte)(words[0] >> 8),
+                (byte)(words[0] & 0xFF),
+                (byte)(words[1] >> 8),
+                (byte)(words[1] & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToSingle(bytes, 0);
+        }
+        set
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            WriteWords(
+            [
+                (ushort)((bytes[0] << 8) | bytes[1]),
+                (ushort)((bytes[2] << 8) | bytes[3])
+            ]);
+
+            OnPropertyChanged(nameof(FloatValue));
+        }
+    }
+
+    public long LongValue
+    {
+        get
+        {
+            if (!TryReadWords(4, out var words))
+            {
+                return Value;
+            }
+
+            byte[] bytes =
+            [
+                (byte)(words[0] >> 8), (byte)(words[0] & 0xFF),
+                (byte)(words[1] >> 8), (byte)(words[1] & 0xFF),
+                (byte)(words[2] >> 8), (byte)(words[2] & 0xFF),
+                (byte)(words[3] >> 8), (byte)(words[3] & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToInt64(bytes, 0);
+        }
+        set
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            WriteWords(
+            [
+                (ushort)((bytes[0] << 8) | bytes[1]),
+                (ushort)((bytes[2] << 8) | bytes[3]),
+                (ushort)((bytes[4] << 8) | bytes[5]),
+                (ushort)((bytes[6] << 8) | bytes[7])
+            ]);
+
+            OnPropertyChanged(nameof(LongValue));
+        }
+    }
+
+    public double DoubleValue
+    {
+        get
+        {
+            if (!TryReadWords(4, out var words))
+            {
+                return Value;
+            }
+
+            byte[] bytes =
+            [
+                (byte)(words[0] >> 8), (byte)(words[0] & 0xFF),
+                (byte)(words[1] >> 8), (byte)(words[1] & 0xFF),
+                (byte)(words[2] >> 8), (byte)(words[2] & 0xFF),
+                (byte)(words[3] >> 8), (byte)(words[3] & 0xFF)
+            ];
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToDouble(bytes, 0);
+        }
+        set
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            WriteWords(
+            [
+                (ushort)((bytes[0] << 8) | bytes[1]),
+                (ushort)((bytes[2] << 8) | bytes[3]),
+                (ushort)((bytes[4] << 8) | bytes[5]),
+                (ushort)((bytes[6] << 8) | bytes[7])
+            ]);
+
+            OnPropertyChanged(nameof(DoubleValue));
+        }
+    }
+
     /// <summary>
     /// 描述 名称
     /// </summary>
@@ -105,7 +358,66 @@ public partial class ModbusRegister : ObservableObject
             Value = 0;
         }
     }
+
     #endregion
+
+    partial void OnValueChanged(ushort value)
+    {
+        NotifyExtendedValueChanged();
+    }
+
+    private bool TryReadWords(int wordCount, out ushort[] words)
+    {
+        words = new ushort[wordCount];
+        if (readRegisterCallback == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < wordCount; i++)
+        {
+            if (Address + i > ushort.MaxValue)
+            {
+                return false;
+            }
+            words[i] = readRegisterCallback((ushort)(Address + i));
+        }
+
+        return true;
+    }
+
+    private void WriteWords(ushort[] words)
+    {
+        if (writeRegisterCallback == null)
+        {
+            if (words.Length > 0)
+            {
+                Value = words[0];
+            }
+            return;
+        }
+
+        for (int i = 0; i < words.Length; i++)
+        {
+            if (Address + i > ushort.MaxValue)
+            {
+                return;
+            }
+            writeRegisterCallback((ushort)(Address + i), words[i]);
+        }
+    }
+
+    public void NotifyExtendedValueChanged()
+    {
+        OnPropertyChanged(nameof(Int16Value));
+        OnPropertyChanged(nameof(UInt16Value));
+        OnPropertyChanged(nameof(HexValue));
+        OnPropertyChanged(nameof(Int32Value));
+        OnPropertyChanged(nameof(UInt32Value));
+        OnPropertyChanged(nameof(FloatValue));
+        OnPropertyChanged(nameof(LongValue));
+        OnPropertyChanged(nameof(DoubleValue));
+    }
 
     // 用于访问相邻寄存器的回调函数
     private Func<ushort, ushort> readRegisterCallback;
