@@ -661,23 +661,66 @@ public partial class HoldingRegisters : ObservableObject
 {
     [ObservableProperty] private ObservableCollection<ModbusRegister> registers;
 
+    private ushort startAddress;
+    public ushort StartAddress
+    {
+        get => startAddress;
+        set => SetProperty(ref startAddress, value);
+    }
+
+    private ushort addressCount = 3000;
+    public ushort AddressCount
+    {
+        get => addressCount;
+        set => SetProperty(ref addressCount, value);
+    }
+
     public HoldingRegisters()
     {
         Registers = [];
-        InitializeRegisters();
+        InitializeRegisters(StartAddress, AddressCount);
     }
 
     /// <summary>
     /// 初始化寄存器
     /// </summary>
-    private void InitializeRegisters()
+    private void InitializeRegisters(ushort startAddress, ushort count)
     {
-        for (ushort i = 0; i < 3000; i++)
+        for (ushort i = 0; i < count; i++)
         {
-            Registers.Add(new ModbusRegister(i, $"", false,
+            Registers.Add(new ModbusRegister((ushort)(startAddress + i), $"", false,
                 DataType.UInt16, Endianness.BigEndian,
                 ReadRegister, WriteRegister));
         }
+    }
+
+    public void ResetRange(ushort startAddress, ushort count)
+    {
+        StartAddress = startAddress;
+        AddressCount = count;
+        Registers.Clear();
+        InitializeRegisters(StartAddress, AddressCount);
+    }
+
+    public bool ContainsAddress(ushort address)
+    {
+        return address >= StartAddress && address < StartAddress + AddressCount;
+    }
+
+    public bool ContainsRange(ushort address, ushort count)
+    {
+        if (count == 0)
+        {
+            return false;
+        }
+
+        int endAddress = address + count - 1;
+        if (endAddress > ushort.MaxValue)
+        {
+            return false;
+        }
+
+        return ContainsAddress(address) && ContainsAddress((ushort)endAddress);
     }
 
     /// <summary>

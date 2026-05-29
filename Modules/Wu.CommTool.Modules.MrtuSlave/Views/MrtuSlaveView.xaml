@@ -94,6 +94,36 @@
                                          Style="{StaticResource FormTextBox}"
                                          Text="{Binding MrtuSlaveModel.SlaveId}" />
 
+                                <TextBox hc:TitleElement.Title="保持寄存器起始:"
+                                         hc:TitleElement.TitleWidth="100"
+                                         IsEnabled="{Binding MrtuSlaveModel.IsOpened, Converter={wu:ReverseBool}}"
+                                         Style="{StaticResource FormTextBox}"
+                                         Text="{Binding MrtuSlaveModel.HoldingStartAddress}" />
+
+                                <TextBox hc:TitleElement.Title="保持寄存器数量:"
+                                         hc:TitleElement.TitleWidth="100"
+                                         IsEnabled="{Binding MrtuSlaveModel.IsOpened, Converter={wu:ReverseBool}}"
+                                         Style="{StaticResource FormTextBox}"
+                                         Text="{Binding MrtuSlaveModel.HoldingAddressCount}" />
+
+                                <TextBox hc:TitleElement.Title="输入寄存器起始:"
+                                         hc:TitleElement.TitleWidth="100"
+                                         IsEnabled="{Binding MrtuSlaveModel.IsOpened, Converter={wu:ReverseBool}}"
+                                         Style="{StaticResource FormTextBox}"
+                                         Text="{Binding MrtuSlaveModel.InputStartAddress}" />
+
+                                <TextBox hc:TitleElement.Title="输入寄存器数量:"
+                                         hc:TitleElement.TitleWidth="100"
+                                         IsEnabled="{Binding MrtuSlaveModel.IsOpened, Converter={wu:ReverseBool}}"
+                                         Style="{StaticResource FormTextBox}"
+                                         Text="{Binding MrtuSlaveModel.InputAddressCount}" />
+
+                                <Button Margin="8,0"
+                                        Command="{Binding MrtuSlaveModel.ApplyRegisterRangeCommand}"
+                                        Content="应用寄存器范围"
+                                        IsEnabled="{Binding MrtuSlaveModel.IsOpened, Converter={wu:ReverseBool}}"
+                                        Style="{StaticResource BlueButton}" />
+
                                 <ComboBox hc:InfoElement.Necessary="True"
                                           hc:InfoElement.Placeholder="请选择波特率..."
                                           hc:InfoElement.Title="波特率"

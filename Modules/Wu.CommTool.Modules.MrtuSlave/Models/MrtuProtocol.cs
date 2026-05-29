@@ -161,6 +161,9 @@ public partial class MrtuProtocol : ObservableObject
         if (quantity < 1 || quantity > 125)
             return CreateErrorResponse(slaveAddress, functionCode, 0x03); // 非法数据值
 
+        if (!holdingRegisters.ContainsRange(startAddress, quantity))
+            return CreateErrorResponse(slaveAddress, functionCode, 0x02); // 非法数据地址
+
         // 检查数据类型边界 - 确保不会读取跨数据类型的寄存器
         if (!ValidateDataTypeBoundaries(startAddress, quantity))
             return CreateErrorResponse(slaveAddress, functionCode, 0x03); // 非法数据值
@@ -196,6 +199,9 @@ public partial class MrtuProtocol : ObservableObject
     /// <returns></returns>
     private byte[] HandleWriteSingleHoldingRegister(byte slaveAddress, byte functionCode, ushort startAddress, byte[] request)
     {
+        if (!holdingRegisters.ContainsAddress(startAddress))
+            return CreateErrorResponse(slaveAddress, functionCode, 0x02); // 非法数据地址
+
         ushort value = (ushort)((request[4] << 8) | request[5]);
 
         // 获取寄存器信息
@@ -237,6 +243,9 @@ public partial class MrtuProtocol : ObservableObject
     {
         ushort quantity = (ushort)((request[4] << 8) | request[5]);
         byte byteCount = request[6];
+
+        if (!holdingRegisters.ContainsRange(startAddress, quantity))
+            return CreateErrorResponse(slaveAddress, functionCode, 0x02); // 非法数据地址
 
         // 检查数据类型边界
         if (!ValidateDataTypeBoundaries(startAddress, quantity))
@@ -334,6 +343,9 @@ public partial class MrtuProtocol : ObservableObject
     {
         if (quantity < 1 || quantity > 125)
             return CreateErrorResponse(slaveAddress, functionCode, 0x04); // 非法数据值
+
+        if (!inputRegisters.ContainsRange(startAddress, quantity))
+            return CreateErrorResponse(slaveAddress, functionCode, 0x02); // 非法数据地址
 
         // 检查数据类型边界
         if (!ValidateDataTypeBoundaries(startAddress, quantity))

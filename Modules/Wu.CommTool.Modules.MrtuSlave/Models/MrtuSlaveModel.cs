@@ -41,6 +41,7 @@ public partial class MrtuSlaveModel : ObservableObject
 
     private void Initial()
     {
+        ApplyRegisterRangeCommand = new RelayCommand(ApplyRegisterRange);
         Task.Run(GetComPorts);
         HoldingRegisters = new HoldingRegisters();
         CoilRegisters = new CoilRegisters();
@@ -163,7 +164,63 @@ public partial class MrtuSlaveModel : ObservableObject
     /// 从站ID 若设置为0则无ID 
     /// </summary>
     [ObservableProperty] byte slaveId = 0;
+
+    private ushort holdingStartAddress = 0;
+    public ushort HoldingStartAddress
+    {
+        get => holdingStartAddress;
+        set => SetProperty(ref holdingStartAddress, value);
+    }
+
+    private ushort holdingAddressCount = 3000;
+    public ushort HoldingAddressCount
+    {
+        get => holdingAddressCount;
+        set => SetProperty(ref holdingAddressCount, value);
+    }
+
+    private ushort inputStartAddress = 0;
+    public ushort InputStartAddress
+    {
+        get => inputStartAddress;
+        set => SetProperty(ref inputStartAddress, value);
+    }
+
+    private ushort inputAddressCount = 3000;
+    public ushort InputAddressCount
+    {
+        get => inputAddressCount;
+        set => SetProperty(ref inputAddressCount, value);
+    }
     #endregion **************************************** 属性 ****************************************
+
+    public IRelayCommand ApplyRegisterRangeCommand { get; private set; }
+
+    private void ApplyRegisterRange()
+    {
+        try
+        {
+            if (IsOpened)
+            {
+                ShowErrorMessage("串口已打开，无法修改寄存器地址范围");
+                return;
+            }
+
+            if (HoldingAddressCount == 0 || InputAddressCount == 0)
+            {
+                ShowErrorMessage("寄存器数量必须大于0");
+                return;
+            }
+
+            HoldingRegisters.ResetRange(HoldingStartAddress, HoldingAddressCount);
+            InputRegisters.ResetRange(InputStartAddress, InputAddressCount);
+            ShowMessage($"保持寄存器范围: {HoldingStartAddress}~{HoldingStartAddress + HoldingAddressCount - 1}；输入寄存器范围: {InputStartAddress}~{InputStartAddress + InputAddressCount - 1}");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage(ex.Message);
+        }
+    }
 
     [RelayCommand]
     [property: JsonIgnore]
