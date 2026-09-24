@@ -6,6 +6,7 @@ using MQTTnet.Server;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 using Wu.CommTool.Modules.CryptoTool.Services;
 using Wu.CommTool.Modules.MqttClient.Converters;
 
@@ -913,6 +914,87 @@ public partial class MqttClientViewModel : NavigationViewModel, IDialogHostAware
             }
             obj.Content = $"{Convert.ToBase64String(obj.Origions)}";
 
+        }
+        catch (Exception ex)
+        {
+            HcGrowlExtensions.Warning(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// SM4解密
+    /// </summary>
+    /// <param name="obj"></param>
+    [RelayCommand]
+    private void SM4Decrypt(MessageData obj)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(obj.Content))
+            {
+                return;
+            }
+
+
+            #region 根据密文格式 将接收的原始字节数组转换成对应的格式
+            string 密文 = "";
+            switch (MqttClientConfig.Sm4CryptoConfig.CipherFormat)
+            {
+                case CryptoTool.Enums.CipherFormat.Hex:
+                    密文 = $"{BitConverter.ToString(obj.Origions).Replace("-", "").InsertFormat(4, " ")}";
+                    break;
+                case CryptoTool.Enums.CipherFormat.Base64:
+                    密文 = Convert.ToBase64String(obj.Origions);
+                    break;
+                default:
+                    break;
+            }
+            #endregion
+
+            string decryptedMessage = Sm4Cryptography.Decrypt(密文, MqttClientConfig.Sm4CryptoConfig);
+
+            obj.Content = $"{decryptedMessage}";
+        }
+        catch (Exception ex)
+        {
+            HcGrowlExtensions.Warning(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// SM4解密
+    /// </summary>
+    /// <param name="obj"></param>
+    [RelayCommand]
+    private async Task SM4Decrypt并查看Json(MessageData obj)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(obj.Content))
+            {
+                return;
+            }
+
+            #region 根据密文格式 将接收的原始字节数组转换成对应的格式
+            string 密文 = "";
+            switch (MqttClientConfig.Sm4CryptoConfig.CipherFormat)
+            {
+                case CryptoTool.Enums.CipherFormat.Hex:
+                    密文 = $"{BitConverter.ToString(obj.Origions).Replace("-", "").InsertFormat(4, " ")}";
+                    break;
+                case CryptoTool.Enums.CipherFormat.Base64:
+                    密文 = Convert.ToBase64String(obj.Origions);
+                    break;
+                default:
+                    break;
+            }
+            #endregion
+
+            string decryptedMessage = Sm4Cryptography.Decrypt(密文, MqttClientConfig.Sm4CryptoConfig);
+
+            obj.Content = $"{decryptedMessage}";
+
+            await OpenJsonDataView(obj);
         }
         catch (Exception ex)
         {

@@ -737,6 +737,14 @@
                                                     <MenuItem Command="{Binding Path=PlacementTarget.Tag.Convert2Base64Command, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}}"
                                                               CommandParameter="{Binding}"
                                                               Header="转换成Base64编码" />
+                                                    <MenuItem Command="{Binding Path=PlacementTarget.Tag.SM4DecryptCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}}"
+                                                              CommandParameter="{Binding}"
+                                                              Header="SM4解密"
+                                                              Visibility="{Binding Path=PlacementTarget.Tag.MqttClientConfig.Sm4CryptoConfig.Key, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={wu:StringIsNullOrWhiteSpace2Collapsed}}" />
+                                                    <MenuItem Command="{Binding Path=PlacementTarget.Tag.SM4Decrypt并查看JsonCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}}"
+                                                              CommandParameter="{Binding}"
+                                                              Header="SM4解密并查看Json"
+                                                              Visibility="{Binding Path=PlacementTarget.Tag.MqttClientConfig.Sm4CryptoConfig.Key, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Converter={wu:StringIsNullOrWhiteSpace2Collapsed}}" />
                                                 </ContextMenu>
                                             </Border.ContextMenu>
 
